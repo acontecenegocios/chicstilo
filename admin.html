@@ -1,27 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
 
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Admin Chicstilo</title>
 
 <style>
 
 body{
 font-family:Arial;
+background:#f2f2f2;
 padding:15px;
+}
+
+.container{
+background:white;
+padding:15px;
+border-radius:10px;
+max-width:400px;
+margin:auto;
 }
 
 input, textarea, button{
 width:100%;
-padding:10px;
+padding:12px;
 margin-bottom:10px;
 font-size:16px;
+border-radius:8px;
+border:1px solid #ccc;
 }
 
 button{
 background:black;
 color:white;
 border:none;
+font-weight:bold;
+}
+
+.preview img{
+width:70px;
+margin:5px;
+border-radius:6px;
 }
 
 </style>
@@ -29,6 +50,8 @@ border:none;
 </head>
 
 <body>
+
+<div class="container">
 
 <h2>Novo Produto</h2>
 
@@ -42,53 +65,6 @@ border:none;
 
 <textarea id="observacoes" placeholder="Observações"></textarea>
 
-<input type="file" id="foto">
+<input type="file" id="fotos" multiple accept="image/*">
 
-<button onclick="salvar()">Salvar</button>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-
-const supabase = window.supabase.createClient(
-"https://pupqmtogotalkrppzkzd.supabase.co",
-"sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
-);
-
-async function salvar(){
-
-const file = document.getElementById("foto").files[0];
-
-let url="";
-
-if(file){
-
-const nome = Date.now()+file.name;
-
-await supabase.storage
-.from("fotos")
-.upload(nome,file);
-
-url="https://pupqmtogotalkrppzkzd.supabase.co/storage/v1/object/public/fotos/"+nome;
-
-}
-
-await supabase.from("produtos").insert({
-
-marca:marca.value,
-tamanho:tamanho.value,
-cor:cor.value,
-preco:preco.value,
-observacoes:observacoes.value,
-foto_url:url
-
-});
-
-alert("Salvo");
-
-}
-
-</script>
-
-</body>
-</html>
+<div class="
