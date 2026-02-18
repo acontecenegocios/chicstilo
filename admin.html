@@ -1,208 +1,75 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Admin Chicstilo</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-<style>
-
-body{
-font-family: Arial;
-background:#f4f4f4;
-padding:15px;
-}
-
-.container{
-background:white;
-padding:15px;
-border-radius:10px;
-max-width:500px;
-margin:auto;
-}
-
-input, textarea{
-width:100%;
-padding:12px;
-margin:5px 0;
-}
-
-button{
-background:black;
-color:white;
-padding:15px;
-border:none;
-width:100%;
-margin-top:5px;
-}
-
-.produto{
-background:#eee;
-padding:10px;
-margin-top:10px;
-border-radius:5px;
-}
-
-.excluir{
-background:red;
-margin-top:5px;
-}
-
-</style>
-
 </head>
 <body>
 
-<div class="container">
-
 <h2>Novo Produto</h2>
 
-<input id="marca" placeholder="Marca">
-<input id="tamanho" placeholder="Tamanho">
-<input id="cor" placeholder="Cor">
-<input id="preco" placeholder="Preço">
-<textarea id="observacoes" placeholder="Observações"></textarea>
+<input id="marca" placeholder="Marca"><br><br>
+<input id="tamanho" placeholder="Tamanho"><br><br>
+<input id="cor" placeholder="Cor"><br><br>
+<input id="preco" placeholder="Preço"><br><br>
 
-<input type="file" id="foto">
+<textarea id="observacoes" placeholder="Observações"></textarea><br><br>
 
-<button onclick="salvar()">Salvar Produto</button>
+<input type="file" id="fotos" multiple accept="image/*"><br><br>
 
-<h2>Produtos</h2>
-<div id="lista"></div>
+<button onclick="salvar()">Salvar</button>
 
-</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-const supabaseClient = supabase.createClient(
-"https://pupqmtogotalkrppzkzd.supabase.co",
-"sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
+const supabase = window.supabase.createClient(
+  "https://pupqmtogotalkrppzkzd.supabase.co",
+  "sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
 );
-
-async function gerarCodigo(){
-
-const { data } = await supabaseClient
-.from("produtos")
-.select("id")
-.order("id",{ascending:false})
-.limit(1);
-
-if(data.length==0) return "CH-0001";
-
-let numero = data[0].id + 1;
-
-return "CH-" + numero.toString().padStart(4,"0");
-
-}
-
-async function uploadFoto(file){
-
-if(!file) return "";
-
-const nome = Date.now() + ".jpg";
-
-const { error } = await supabaseClient.storage
-.from("fotos")
-.upload(nome,file);
-
-if(error){
-alert(error.message);
-return "";
-}
-
-const { data } = supabaseClient.storage
-.from("fotos")
-.getPublicUrl(nome);
-
-return data.publicUrl;
-
-}
 
 async function salvar(){
 
-const codigo = await gerarCodigo();
+  const files = document.getElementById("fotos").files;
 
-const marca = document.getElementById("marca").value;
-const tamanho = document.getElementById("tamanho").value;
-const cor = document.getElementById("cor").value;
-const preco = document.getElementById("preco").value;
-const observacoes = document.getElementById("observacoes").value;
+  if(files.length > 5){
+    alert("Máximo 5 fotos");
+    return;
+  }
 
-const file = document.getElementById("foto").files[0];
+  let urls = [];
 
-let foto_url = "";
+  for(let file of files){
 
-if(file){
-foto_url = await uploadFoto(file);
-}
+    const nome = Date.now() + "_" + file.name;
 
-await supabaseClient
-.from("produtos")
-.insert([{
-codigo,
-marca,
-tamanho,
-cor,
-preco,
-observacoes,
-foto_url
-}]);
+    await supabase.storage
+      .from("fotos")
+      .upload(nome, file);
 
-alert("Produto salvo!");
+    const url =
+      "https://pupqmtogotalkrppzkzd.supabase.co/storage/v1/object/public/fotos/" + nome;
 
-carregar();
+    urls.push(url);
 
-}
+  }
 
-async function excluir(id){
+  await supabase
+    .from("produtos")
+    .insert({
 
-if(!confirm("Excluir produto?")) return;
+      marca: marca.value,
+      tamanho: tamanho.value,
+      cor: cor.value,
+      preco: preco.value,
+      observacoes: observacoes.value,
+      fotos: urls
 
-await supabaseClient
-.from("produtos")
-.delete()
-.eq("id",id);
+    });
 
-carregar();
+  alert("Produto salvo");
 
 }
-
-async function carregar(){
-
-const { data } = await supabaseClient
-.from("produtos")
-.select("*")
-.order("id",{ascending:false});
-
-const lista = document.getElementById("lista");
-
-lista.innerHTML="";
-
-data.forEach(p=>{
-
-lista.innerHTML+=`
-
-<div class="produto">
-
-<b>${p.codigo}</b><br>
-${p.marca}<br>
-${p.tamanho} - ${p.cor}<br>
-
-<button class="excluir" onclick="excluir(${p.id})">
-Excluir
-</button>
-
-</div>
-
-`;
-
-});
-
-}
-
-carregar();
 
 </script>
 
