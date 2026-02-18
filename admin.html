@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Painel Admin Chicstilo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SUPABASE CDN CORRETO -->
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<style>
+body{
+font-family: Arial;
+background:#f4f4f4;
+padding:20px;
+}
+
+.container{
+background:white;
+padding:20px;
+border-radius:10px;
+max-width:500px;
+margin:auto;
+}
+
+input, textarea{
+width:100%;
+padding:10px;
+margin:5px 0;
+}
+
+button{
+background:black;
+color:white;
+padding:15px;
+border:none;
+width:100%;
+cursor:pointer;
+font-size:16px;
+}
+
+button:hover{
+background:#333;
+}
+
+.produto{
+background:#eee;
+padding:10px;
+margin-top:10px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>Adicionar Produto</h2>
+
+<input id="codigo" placeholder="Código">
+<input id="marca" placeholder="Marca">
+<input id="tamanho" placeholder="Tamanho">
+<input id="cor" placeholder="Cor">
+<input id="preco" placeholder="Preço">
+<textarea id="observacoes" placeholder="Observações"></textarea>
+<input id="foto" placeholder="URL da Foto">
+
+<button type="button" onclick="salvar()">Salvar Produto</button>
+
+<h2>Produtos</h2>
+<div id="lista"></div>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://pupqmtogotalkrppzkzd.supabase.co",
+"sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
+);
+
+async function salvar(){
+
+try{
+
+const codigo = document.getElementById("codigo").value;
+const marca = document.getElementById("marca").value;
+const tamanho = document.getElementById("tamanho").value;
+const cor = document.getElementById("cor").value;
+const preco = document.getElementById("preco").value;
+const observacoes = document.getElementById("observacoes").value;
+const foto = document.getElementById("foto").value;
+
+const { error } = await supabaseClient
+.from("produtos")
+.insert([{
+codigo,
+marca,
+tamanho,
+cor,
+preco,
+observacoes,
+foto_url: foto
+}]);
+
+if(error){
+alert("Erro: " + error.message);
+return;
+}
+
+alert("Produto salvo com sucesso!");
+
+carregar();
+
+}catch(e){
+alert("Erro: " + e.message);
+}
+
+}
+
+async function carregar(){
+
+const { data, error } = await supabaseClient
+.from("produtos")
+.select("*")
+.order("id",{ascending:false});
+
+if(error){
+alert(error.message);
+return;
+}
+
+const lista = document.getElementById("lista");
+
+lista.innerHTML = "";
+
+data.forEach(p => {
+
+lista.innerHTML += `
+<div class="produto">
+<b>${p.codigo}</b><br>
+${p.marca}<br>
+${p.tamanho} - ${p.cor}<br>
+${p.preco || ""}
+</div>
+`;
+
+});
+
+}
+
+carregar();
+
+</script>
+
+</body>
+</html>
