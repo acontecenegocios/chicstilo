@@ -2,102 +2,154 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<title>Painel Admin Chicstilo</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Chicstilo</title>
+
+<!-- SUPABASE CDN CORRETO -->
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<style>
+body{
+font-family: Arial;
+background:#f4f4f4;
+padding:20px;
+}
+
+.container{
+background:white;
+padding:20px;
+border-radius:10px;
+max-width:500px;
+margin:auto;
+}
+
+input, textarea{
+width:100%;
+padding:10px;
+margin:5px 0;
+}
+
+button{
+background:black;
+color:white;
+padding:15px;
+border:none;
+width:100%;
+cursor:pointer;
+font-size:16px;
+}
+
+button:hover{
+background:#333;
+}
+
+.produto{
+background:#eee;
+padding:10px;
+margin-top:10px;
+}
+</style>
+
 </head>
+<body>
 
-<body style="font-family:Arial; padding:20px;">
+<div class="container">
 
-<h2>Admin Chicstilo</h2>
+<h2>Adicionar Produto</h2>
 
-<div>
+<input id="codigo" placeholder="Código">
+<input id="marca" placeholder="Marca">
+<input id="tamanho" placeholder="Tamanho">
+<input id="cor" placeholder="Cor">
+<input id="preco" placeholder="Preço">
+<textarea id="observacoes" placeholder="Observações"></textarea>
+<input id="foto" placeholder="URL da Foto">
 
-<label>Marca</label><br>
-<input type="text" id="marca"><br><br>
+<button type="button" onclick="salvar()">Salvar Produto</button>
 
-<label>Tamanho</label><br>
-<input type="text" id="tamanho"><br><br>
-
-<label>Cor</label><br>
-<input type="text" id="cor"><br><br>
-
-<label>Preço</label><br>
-<input type="text" id="preco"><br><br>
-
-<label>Observações</label><br>
-<textarea id="observacoes"></textarea><br><br>
-
-<label>Fotos (até 5)</label><br>
-<input type="file" id="fotos" multiple><br><br>
-
-<button id="btnSalvar">SALVAR PRODUTO</button>
+<h2>Produtos</h2>
+<div id="lista"></div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 
-const supabase = window.supabase.createClient(
+const supabaseClient = supabase.createClient(
 "https://pupqmtogotalkrppzkzd.supabase.co",
 "sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
 );
 
-document.getElementById("btnSalvar").onclick = salvar;
-
 async function salvar(){
 
-const files = document.getElementById("fotos").files;
+try{
 
-if(files.length == 0){
-alert("Selecione uma foto");
+const codigo = document.getElementById("codigo").value;
+const marca = document.getElementById("marca").value;
+const tamanho = document.getElementById("tamanho").value;
+const cor = document.getElementById("cor").value;
+const preco = document.getElementById("preco").value;
+const observacoes = document.getElementById("observacoes").value;
+const foto = document.getElementById("foto").value;
+
+const { error } = await supabaseClient
+.from("produtos")
+.insert([{
+codigo,
+marca,
+tamanho,
+cor,
+preco,
+observacoes,
+foto_url: foto
+}]);
+
+if(error){
+alert("Erro: " + error.message);
 return;
 }
 
-if(files.length > 5){
-alert("Máximo 5 fotos");
+alert("Produto salvo com sucesso!");
+
+carregar();
+
+}catch(e){
+alert("Erro: " + e.message);
+}
+
+}
+
+async function carregar(){
+
+const { data, error } = await supabaseClient
+.from("produtos")
+.select("*")
+.order("id",{ascending:false});
+
+if(error){
+alert(error.message);
 return;
 }
 
-let urlFoto="";
+const lista = document.getElementById("lista");
 
-const file = files[0];
+lista.innerHTML = "";
 
-const nome = Date.now()+"_"+file.name;
+data.forEach(p => {
 
-const { error: erroUpload } =
-await supabase.storage.from("fotos").upload(nome,file);
-
-if(erroUpload){
-alert("Erro upload");
-console.log(erroUpload);
-return;
-}
-
-urlFoto =
-"https://pupqmtogotalkrppzkzd.supabase.co/storage/v1/object/public/fotos/"+nome;
-
-const { error } =
-await supabase.from("produtos").insert({
-
-marca:document.getElementById("marca").value,
-tamanho:document.getElementById("tamanho").value,
-cor:document.getElementById("cor").value,
-preco:document.getElementById("preco").value,
-observacoes:document.getElementById("observacoes").value,
-foto_url:urlFoto
+lista.innerHTML += `
+<div class="produto">
+<b>${p.codigo}</b><br>
+${p.marca}<br>
+${p.tamanho} - ${p.cor}<br>
+${p.preco || ""}
+</div>
+`;
 
 });
 
-if(error){
-alert("Erro salvar produto");
-console.log(error);
-return;
 }
 
-alert("Produto salvo com sucesso");
-
-}
+carregar();
 
 </script>
 
