@@ -40,6 +40,13 @@ padding:10px;
 .card img{
 width:100%;
 border-radius:10px;
+margin-bottom:5px;
+}
+
+.codigo{
+font-size:13px;
+color:#666;
+margin-bottom:5px;
 }
 
 .btn{
@@ -51,6 +58,10 @@ padding:10px;
 margin-top:5px;
 text-decoration:none;
 border-radius:5px;
+}
+
+.btn:hover{
+background:#0a8f0a;
 }
 
 </style>
@@ -75,16 +86,29 @@ const whatsapp = "5511978449058";
 
 async function carregar(){
 
-const { data } = await supabaseClient
+const { data, error } = await supabaseClient
 .from("produtos")
 .select("*")
-.order("id",{ascending:false});
+.order("codigo",{ascending:true});
+
+if(error){
+console.error(error);
+return;
+}
 
 const container = document.getElementById("produtos");
-
 container.innerHTML="";
 
 data.forEach(p => {
+
+let fotosHTML = "";
+
+// suporta até 5 fotos
+if(p.foto_url) fotosHTML += `<img src="${p.foto_url}">`;
+if(p.foto_url2) fotosHTML += `<img src="${p.foto_url2}">`;
+if(p.foto_url3) fotosHTML += `<img src="${p.foto_url3}">`;
+if(p.foto_url4) fotosHTML += `<img src="${p.foto_url4}">`;
+if(p.foto_url5) fotosHTML += `<img src="${p.foto_url5}">`;
 
 const msg = encodeURIComponent(
 `Olá, tenho interesse no produto ${p.codigo} - ${p.marca}`
@@ -94,14 +118,20 @@ container.innerHTML += `
 
 <div class="card">
 
-${p.foto_url ? `<img src="${p.foto_url}">` : ""}
+<div class="codigo">
+Código: ${p.codigo || ""}
+</div>
 
-<b>${p.marca}</b><br>
-Tamanho: ${p.tamanho}<br>
-Cor: ${p.cor}<br>
+${fotosHTML}
+
+<b>${p.marca || ""}</b><br>
+
+${p.tamanho ? "Tamanho: "+p.tamanho+"<br>" : ""}
+${p.cor ? "Cor: "+p.cor+"<br>" : ""}
 ${p.preco ? "R$ "+p.preco+"<br>" : ""}
 
-<a class="btn" href="https://wa.me/${whatsapp}?text=${msg}">
+<a class="btn" target="_blank"
+href="https://wa.me/${whatsapp}?text=${msg}">
 Comprar
 </a>
 
