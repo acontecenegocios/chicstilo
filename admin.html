@@ -2,75 +2,76 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Painel Admin Chicstilo</title>
+<title>Admin Chicstilo</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- SUPABASE CDN CORRETO -->
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <style>
+
 body{
 font-family: Arial;
 background:#f4f4f4;
-padding:20px;
-}
-
-.container{
-background:white;
-padding:20px;
-border-radius:10px;
-max-width:500px;
-margin:auto;
-}
-
-input, textarea{
-width:100%;
+margin:0;
 padding:10px;
-margin:5px 0;
 }
 
-button{
+.header{
 background:black;
 color:white;
 padding:15px;
-border:none;
-width:100%;
-cursor:pointer;
-font-size:16px;
+text-align:center;
+font-size:20px;
 }
 
-button:hover{
-background:#333;
-}
-
-.produto{
-background:#eee;
-padding:10px;
+.container{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:10px;
 margin-top:10px;
 }
+
+.card{
+background:white;
+border-radius:10px;
+padding:10px;
+}
+
+.card img{
+width:100%;
+border-radius:10px;
+}
+
+.btn{
+display:block;
+color:white;
+text-align:center;
+padding:10px;
+margin-top:5px;
+text-decoration:none;
+border-radius:5px;
+cursor:pointer;
+border:none;
+}
+
+.excluir{
+background:red;
+}
+
 </style>
 
 </head>
 <body>
 
-<div class="container">
-
-<h2>Adicionar Produto</h2>
-
-<input id="codigo" placeholder="Código">
-<input id="marca" placeholder="Marca">
-<input id="tamanho" placeholder="Tamanho">
-<input id="cor" placeholder="Cor">
-<input id="preco" placeholder="Preço">
-<textarea id="observacoes" placeholder="Observações"></textarea>
-<input id="foto" placeholder="URL da Foto">
-
-<button type="button" onclick="salvar()">Salvar Produto</button>
-
-<h2>Produtos</h2>
-<div id="lista"></div>
-
+<div class="header">
+Admin Chicstilo
 </div>
+
+<input type="file" id="fotos" multiple>
+
+<button onclick="upload()">Enviar Produto</button>
+
+<div class="container" id="produtos"></div>
 
 <script>
 
@@ -79,70 +80,103 @@ const supabaseClient = supabase.createClient(
 "sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
 );
 
-async function salvar(){
+async function upload(){
 
-try{
+const files = document.getElementById("fotos").files;
 
-const codigo = document.getElementById("codigo").value;
-const marca = document.getElementById("marca").value;
-const tamanho = document.getElementById("tamanho").value;
-const cor = document.getElementById("cor").value;
-const preco = document.getElementById("preco").value;
-const observacoes = document.getElementById("observacoes").value;
-const foto = document.getElementById("foto").value;
-
-const { error } = await supabaseClient
-.from("produtos")
-.insert([{
-codigo,
-marca,
-tamanho,
-cor,
-preco,
-observacoes,
-foto_url: foto
-}]);
-
-if(error){
-alert("Erro: " + error.message);
+if(files.length == 0){
+alert("Selecione fotos");
 return;
 }
 
-alert("Produto salvo com sucesso!");
+if(files.length > 5){
+alert("Máximo 5 fotos");
+return;
+}
+
+let urls=[];
+
+for(let file of files){
+
+const nome = Date.now()+"_"+file.name;
+
+const { error } = await supabaseClient
+.storage
+.from("fotos")
+.upload(nome,file);
+
+if(error){
+alert("Erro upload");
+return;
+}
+
+const url =
+"https://pupqmtogotalkrppzkzd.supabase.co/storage/v1/object/public/fotos/"+nome;
+
+urls.push(url);
+
+}
+
+const codigo = "PROD-"+Date.now();
+
+await supabaseClient
+.from("produtos")
+.insert({
+
+codigo:codigo,
+foto_url:urls[0],
+fotos:urls
+
+});
+
+alert("Produto enviado");
 
 carregar();
 
-}catch(e){
-alert("Erro: " + e.message);
 }
+
+async function excluir(id){
+
+if(!confirm("Excluir produto?")) return;
+
+await supabaseClient
+.from("produtos")
+.delete()
+.eq("id",id);
+
+carregar();
 
 }
 
 async function carregar(){
 
-const { data, error } = await supabaseClient
+const { data } = await supabaseClient
 .from("produtos")
 .select("*")
-.order("id",{ascending:false});
+.order("codigo",{ascending:true});
 
-if(error){
-alert(error.message);
-return;
-}
+const container =
+document.getElementById("produtos");
 
-const lista = document.getElementById("lista");
+container.innerHTML="";
 
-lista.innerHTML = "";
+data.forEach(p=>{
 
-data.forEach(p => {
+container.innerHTML+=`
 
-lista.innerHTML += `
-<div class="produto">
-<b>${p.codigo}</b><br>
-${p.marca}<br>
-${p.tamanho} - ${p.cor}<br>
-${p.preco || ""}
+<div class="card">
+
+${p.foto_url ? `<img src="${p.foto_url}">` : ""}
+
+<b>${p.codigo}</b>
+
+<button class="btn excluir"
+onclick="excluir('${p.id}')">
+Excluir
+</button>
+
 </div>
+
 `;
 
 });
