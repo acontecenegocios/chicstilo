@@ -1,21 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Admin Chicstilo</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body{
+font-family:Arial;
+padding:15px;
+}
+
+input, textarea, button{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+font-size:16px;
+}
+
+button{
+background:black;
+color:white;
+border:none;
+}
+
+</style>
+
 </head>
+
 <body>
 
 <h2>Novo Produto</h2>
 
-<input id="marca" placeholder="Marca"><br><br>
-<input id="tamanho" placeholder="Tamanho"><br><br>
-<input id="cor" placeholder="Cor"><br><br>
-<input id="preco" placeholder="Preço"><br><br>
+<input id="marca" placeholder="Marca">
 
-<textarea id="observacoes" placeholder="Observações"></textarea><br><br>
+<input id="tamanho" placeholder="Tamanho">
 
-<input type="file" id="fotos" multiple accept="image/*"><br><br>
+<input id="cor" placeholder="Cor">
+
+<input id="preco" placeholder="Preço">
+
+<textarea id="observacoes" placeholder="Observações"></textarea>
+
+<input type="file" id="foto">
 
 <button onclick="salvar()">Salvar</button>
 
@@ -24,50 +51,40 @@
 <script>
 
 const supabase = window.supabase.createClient(
-  "https://pupqmtogotalkrppzkzd.supabase.co",
-  "sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
+"https://pupqmtogotalkrppzkzd.supabase.co",
+"sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
 );
 
 async function salvar(){
 
-  const files = document.getElementById("fotos").files;
+const file = document.getElementById("foto").files[0];
 
-  if(files.length > 5){
-    alert("Máximo 5 fotos");
-    return;
-  }
+let url="";
 
-  let urls = [];
+if(file){
 
-  for(let file of files){
+const nome = Date.now()+file.name;
 
-    const nome = Date.now() + "_" + file.name;
+await supabase.storage
+.from("fotos")
+.upload(nome,file);
 
-    await supabase.storage
-      .from("fotos")
-      .upload(nome, file);
+url="https://pupqmtogotalkrppzkzd.supabase.co/storage/v1/object/public/fotos/"+nome;
 
-    const url =
-      "https://pupqmtogotalkrppzkzd.supabase.co/storage/v1/object/public/fotos/" + nome;
+}
 
-    urls.push(url);
+await supabase.from("produtos").insert({
 
-  }
+marca:marca.value,
+tamanho:tamanho.value,
+cor:cor.value,
+preco:preco.value,
+observacoes:observacoes.value,
+foto_url:url
 
-  await supabase
-    .from("produtos")
-    .insert({
+});
 
-      marca: marca.value,
-      tamanho: tamanho.value,
-      cor: cor.value,
-      preco: preco.value,
-      observacoes: observacoes.value,
-      fotos: urls
-
-    });
-
-  alert("Produto salvo");
+alert("Salvo");
 
 }
 
