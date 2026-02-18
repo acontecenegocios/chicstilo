@@ -2,100 +2,120 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<title>Catálogo Chicstilo</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Chicstilo</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <style>
 
 body{
-  font-family: Arial;
-  background:#f2f2f2;
-  margin:0;
-  padding:10px;
+font-family: Arial;
+background:#f4f4f4;
+margin:0;
+padding:10px;
 }
 
-header{
-  background:black;
-  color:white;
-  padding:15px;
-  text-align:center;
-  font-size:24px;
+.header{
+background:black;
+color:white;
+padding:15px;
+text-align:center;
+font-size:20px;
 }
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-  gap:10px;
-  padding:10px;
+.container{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:10px;
+margin-top:10px;
 }
 
-.produto{
-  background:white;
-  border-radius:10px;
-  padding:10px;
-  box-shadow:0 0 5px rgba(0,0,0,0.2);
+.card{
+background:white;
+border-radius:10px;
+padding:10px;
 }
 
-.produto img{
-  width:100%;
-  border-radius:8px;
+.card img{
+width:100%;
+border-radius:10px;
 }
 
-.codigo{
-  font-size:12px;
-  color:gray;
+.btn{
+display:block;
+background:green;
+color:white;
+text-align:center;
+padding:10px;
+margin-top:5px;
+text-decoration:none;
+border-radius:5px;
 }
 
 </style>
 
 </head>
-
 <body>
 
-<header>Chicstilo</header>
+<div class="header">
+Catálogo Chicstilo
+</div>
 
-<div class="grid" id="grid"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div class="container" id="produtos"></div>
 
 <script>
 
-const supabase = window.supabase.createClient(
+const supabaseClient = supabase.createClient(
 "https://pupqmtogotalkrppzkzd.supabase.co",
 "sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
 );
 
+const whatsapp = "5511978449058";
+
 async function carregar(){
 
-const { data, error } = await supabase
+const { data } = await supabaseClient
 .from("produtos")
 .select("*")
 .order("id",{ascending:false});
 
-if(error){
-console.log(error);
-return;
+const container = document.getElementById("produtos");
+
+container.innerHTML="";
+
+data.forEach(p => {
+
+const msg = encodeURIComponent(
+`Olá, tenho interesse no produto ${p.codigo} - ${p.marca}`
+);
+
+container.innerHTML += `
+
+<div class="card">
+
+${p.foto_url ? `<img src="${p.foto_url}">` : ""}
+
+<b>${p.marca}</b><br>
+Tamanho: ${p.tamanho}<br>
+Cor: ${p.cor}<br>
+${p.preco ? "R$ "+p.preco+"<br>" : ""}
+
+<a class="btn" href="https://wa.me/${whatsapp}?text=${msg}">
+Comprar
+</a>
+
+</div>
+
+`;
+
+});
+
 }
 
-const grid = document.getElementById("grid");
+carregar();
 
-grid.innerHTML="";
+</script>
 
-data.forEach(p=>{
-
-grid.innerHTML += `
-
-<div class="produto">
-
-<img src="${p.foto_url || ''}">
-
-<div class="codigo">
-${p.codigo || ''}
-</div>
-
-<div><b>${p.marca || ''}</b></div>
-
-<div>
-Tam: ${p.tamanho || ''}
-</div>
+</body>
+</html>
