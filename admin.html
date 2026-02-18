@@ -24,11 +24,24 @@ text-align:center;
 font-size:20px;
 }
 
+.form{
+background:white;
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+.form input, .form textarea{
+width:100%;
+padding:8px;
+margin-top:5px;
+margin-bottom:10px;
+}
+
 .container{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
 gap:10px;
-margin-top:10px;
 }
 
 .card{
@@ -48,10 +61,13 @@ color:white;
 text-align:center;
 padding:10px;
 margin-top:5px;
-text-decoration:none;
+border:none;
 border-radius:5px;
 cursor:pointer;
-border:none;
+}
+
+.salvar{
+background:green;
 }
 
 .excluir{
@@ -67,9 +83,34 @@ background:red;
 Admin Chicstilo
 </div>
 
+<div class="form">
+
+Código
+<input id="codigo">
+
+Marca
+<input id="marca">
+
+Tamanho
+<input id="tamanho">
+
+Cor
+<input id="cor">
+
+Preço
+<input id="preco">
+
+Observações
+<textarea id="observacoes"></textarea>
+
+Fotos (até 5)
 <input type="file" id="fotos" multiple>
 
-<button onclick="upload()">Enviar Produto</button>
+<button class="btn salvar" onclick="salvar()">
+Salvar Produto
+</button>
+
+</div>
 
 <div class="container" id="produtos"></div>
 
@@ -80,12 +121,13 @@ const supabaseClient = supabase.createClient(
 "sb_publishable_mEb4-SGlEs8Sq7IM_UQl-Q_P-Yy1O4V"
 );
 
-async function upload(){
+async function salvar(){
 
-const files = document.getElementById("fotos").files;
+const files =
+document.getElementById("fotos").files;
 
 if(files.length == 0){
-alert("Selecione fotos");
+alert("Selecione pelo menos uma foto");
 return;
 }
 
@@ -100,8 +142,8 @@ for(let file of files){
 
 const nome = Date.now()+"_"+file.name;
 
-const { error } = await supabaseClient
-.storage
+const { error } =
+await supabaseClient.storage
 .from("fotos")
 .upload(nome,file);
 
@@ -110,28 +152,44 @@ alert("Erro upload");
 return;
 }
 
-const url =
-"https://pupqmtogotalkrppzkzd.supabase.co/storage/v1/object/public/fotos/"+nome;
-
-urls.push(url);
+urls.push(
+"https://pupqmtogotalkrppzkzd.supabase.co/storage/v1/object/public/fotos/"+nome
+);
 
 }
-
-const codigo = "PROD-"+Date.now();
 
 await supabaseClient
 .from("produtos")
 .insert({
 
-codigo:codigo,
+codigo:document.getElementById("codigo").value,
+marca:document.getElementById("marca").value,
+tamanho:document.getElementById("tamanho").value,
+cor:document.getElementById("cor").value,
+preco:document.getElementById("preco").value,
+observacoes:document.getElementById("observacoes").value,
 foto_url:urls[0],
 fotos:urls
 
 });
 
-alert("Produto enviado");
+alert("Produto salvo");
+
+limpar();
 
 carregar();
+
+}
+
+function limpar(){
+
+codigo.value="";
+marca.value="";
+tamanho.value="";
+cor.value="";
+preco.value="";
+observacoes.value="";
+fotos.value="";
 
 }
 
@@ -150,7 +208,8 @@ carregar();
 
 async function carregar(){
 
-const { data } = await supabaseClient
+const { data } =
+await supabaseClient
 .from("produtos")
 .select("*")
 .order("codigo",{ascending:true});
@@ -166,9 +225,10 @@ container.innerHTML+=`
 
 <div class="card">
 
-${p.foto_url ? `<img src="${p.foto_url}">` : ""}
+<img src="${p.foto_url}">
 
-<b>${p.codigo}</b>
+<b>${p.codigo}</b><br>
+${p.marca || ""}
 
 <button class="btn excluir"
 onclick="excluir('${p.id}')">
